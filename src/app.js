@@ -3,16 +3,31 @@ const app = express();
 
 const connectDB = require("./configue/database")
 const User = require("./models/user")
-
+const bcrypt = require("bcrypt")
+const {signUpValidator} = require("./utils/validator")
 app.use(express.json())
 
 app.post("/signup",async(req,res)=>{
+     const data = req.body;
+     
+try {
 
-    const user = new User(req.body)
+  signUpValidator(req);
+  const {firstName,lastName,emailId,password} = req.body
+const passwordHash = await bcrypt.hash(password, 10)
+
+    const user = new User({
+        firstName,lastName,emailId,password:passwordHash
+    })
 
     await user.save();
+   res.send("user added succesfully")
 
-res.send("user added succesfully")
+    
+} catch (error) {
+    res.status(400).json({error:error.message})
+}
+
 
 })
 
@@ -49,6 +64,10 @@ app.patch("/user",async(req,res)=>{
     const data = req.body
     const userId = req.body.userId
     try {
+        const allowedUpdates = ["firstName","lastName","age","gender","skills","photoUrl"]
+        if(!Object.keys(data).every((k)=>allowedUpdates.includes(k))){
+           throw new Error("Update not allowed")
+        }
         const user = await User.findByIdAndUpdate({_id:userId},data,{
             returnDocument:'before'
         })
@@ -57,7 +76,7 @@ app.patch("/user",async(req,res)=>{
         await user.save()
         res.send(`${user.firstName}'s data updated succesfully`);
     } catch (error) {
-        res.status(400).send("something went wrong")
+        res.status(400).json({error:error.message})
     }
 })
 
