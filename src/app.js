@@ -1,11 +1,20 @@
 const express = require("express");
 const app = express();
-
+const jwt = require("jsonwebtoken")
 const connectDB = require("./configue/database")
 const User = require("./models/user")
 const bcrypt = require("bcrypt")
 const {signUpValidator} = require("./utils/validator")
-app.use(express.json())
+const cookie = require("cookie-parser")
+const useAuth = require("./middlewares/auth")
+
+
+
+
+
+app.use(express.json());
+app.use(cookie());
+
 
 app.post("/signup",async(req,res)=>{
      const data = req.body;
@@ -32,26 +41,45 @@ const passwordHash = await bcrypt.hash(password, 10)
 })
 
 
-app.get("/user",async (req,res)=>{
-    const userEmail = req.body.emailId;
-    try {
-        const user = await User.find({emailId:userEmail});
-        
-       if(user.length===0){
-        res.status(400).send("user not found")
-       }else{
+app.post("/login",async(req,res)=>{
+    try{
+const {emailId, password} = req.body
+const user = await User.findOne({emailId:emailId})
+if(!user){
+    throw new Error("Invalid credentials")
+}
+const passwordDB = user.password
+const compare = await bcrypt.compare(password,passwordDB)
+if(!compare){
+    throw new Error ("Invalid credentials")
+}
 
-           res.send(user)
-       }
+const token = jwt.sign({_id:user._id},"DEV@tinder123")
+res.cookie("token",token)
 
+ res.send("Login successful")
 
-    } catch (error) {
-        res.status(400).send("Something went wrong" +error);
+} catch(err){
+        res.status(400).json({error:err.message})
     }
 })
 
 
-app.get("/feed",async(req,res)=>{
+app.get("/user",useAuth, async (req,res)=>{
+    const user = req.user;
+    try{
+        if(!user){
+            throw new Error("User not exist")
+        }else{
+            res.send(user)
+        }
+    }catch(err){
+        res.status(400).json({error:err.message})
+    }
+})
+
+
+app.get("/feed", useAuth, async(req,res)=>{
     try {
         const user = await User.find({})
         res.send(user)
@@ -60,7 +88,7 @@ app.get("/feed",async(req,res)=>{
     }
 })
 
-app.patch("/user",async(req,res)=>{
+app.patch("/user",useAuth,async(req,res)=>{
     const data = req.body
     const userId = req.body.userId
     try {
