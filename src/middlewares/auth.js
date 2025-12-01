@@ -3,17 +3,21 @@ const jwt = require("jsonwebtoken")
 const User = require("../models/user")
 
 const useAuth = async(req,res,next)=>{
-                const {token} = req?.cookies;
-               try{ if(!token){
-                    throw new Error("Invalid token")
+    try{ 
+                   const {token} = await req?.cookies;
+                
+                if(!token){
+                    return res.status(401).send("Please Login")
                 }
                     const decoded = await jwt.verify(token,"DEV@tinder123")
                     const{_id}= decoded
                     const user = await User.findById(_id);
+                    const userObj = user.toObject();
+                    delete userObj.password
                     if(!user){
                         throw new Error("User not exist")
                     }else{
-                         req.user = user
+                         req.user = userObj 
                         next()
                     }}catch(err){
                         res.status(400).json({error:err.message})
