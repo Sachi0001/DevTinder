@@ -1,3 +1,7 @@
+
+require("dotenv").config();
+
+
 const express = require("express");
 const app = express();
 const connectDB = require("./configue/database")
@@ -10,6 +14,7 @@ const profileRouter = require("./routers/profileRouter");
 const requestRouter = require("./routers/requestRouter");
 const userRouter = require("./routers/userRouter")
 const useAuth = require("./middlewares/auth")
+
 app.use(express.json());
 app.use(cookie());
 app.use(cors({
@@ -21,15 +26,6 @@ app.use("/",profileRouter);
 app.use("/",requestRouter);
 app.use("/",userRouter)
 
-
-// app.get("/feed", useAuth, async(req,res)=>{
-//     try {
-//         const user = await User.find({})
-//         res.send(user)
-//     } catch (error) {
-//         res.status(400).send("something went wrong")
-//     }
-// })
 
 
 connectDB().then(()=>{

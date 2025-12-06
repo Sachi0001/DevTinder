@@ -5,6 +5,7 @@ const useAuth = require("../middlewares/auth")
 const connectionRequest = require("../models/requestConnection")
  const User = require("../models/user")
 
+ const sendEmail = require("../utils/sendEmail")
 requestRouter.post(
   "/sendRequest/:status/:userId",
   useAuth,
@@ -47,6 +48,8 @@ requestRouter.post(
 
       console.log(data)
       await data.save();
+      const emailService = await sendEmail.run()
+      console.log(emailService,"emailService")
     if(status==="ignored"){
       res.status(200).json("Profile removed from your feed successfully")
     }
