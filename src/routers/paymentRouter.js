@@ -76,4 +76,19 @@ return res.status(200).json({message:"webhook received successfully"})
     }
 })
 
+
+paymentRouter.get("/premium/verify",useAuth,async(req,res)=>{
+    try {
+        const user = req.user;
+        if(user.isPremium ){
+            res.status(200).json({isPremium:true,membershipType:user.membershipType})
+        }
+    } catch (error) {
+        console.log(error)
+        res.status(500).json({message:"Something went wrong"})
+    }
+})
+
+
+
 module.exports = paymentRouter;
